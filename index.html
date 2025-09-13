@@ -25,22 +25,12 @@
         .stopwatch-button { transition: background-color 0.3s, transform 0.2s; }
         .stopwatch-button:hover { transform: scale(1.1); }
         .stopwatch-display { font-variant-numeric: tabular-nums; }
-        .lang-button.active {
-            background-color: #4f46e5;
-            color: white;
-        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
-    <div class="absolute top-4 right-4 z-50 flex space-x-2">
-        <button id="lang-si" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200 active">
-            සිංහල
-        </button>
-        <button id="lang-en" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
+    <div class="absolute top-4 right-4 z-50">
+        <button id="lang-toggle" class="bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
             English
-        </button>
-        <button id="lang-ta" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
-            தமிழ்
         </button>
     </div>
 
@@ -359,16 +349,33 @@
 
         const holidays = {
             'LK': [
+                { date: '2025-01-13', name: 'Duruthu Full Moon Poya Day' },
                 { date: '2025-01-14', name: 'Tamil Thai Pongal Day' },
-                { date: '2025-02-04', name: 'Independence Day' },
+                { date: '2025-02-04', name: 'National Day' },
+                { date: '2025-02-12', name: 'Navam Full Moon Poya Day' },
+                { date: '2025-02-26', name: 'Mahasivarathri Day' },
+                { date: '2025-03-13', name: 'Madin Full Moon Poya Day' },
+                { date: '2025-03-31', name: 'Eid al-Fitr' },
+                { date: '2025-04-12', name: 'Bak Full Moon Poya Day' },
+                { date: '2025-04-13', name: 'Sinhala and Tamil New Year' },
+                { date: '2025-04-14', name: 'Sinhala and Tamil New Year' },
+                { date: '2025-04-18', name: 'Duruthu Full Moon Poya Day' },
                 { date: '2025-05-01', name: 'May Day' },
-                { date: '2025-05-12', name: 'Vesak Poya' },
-                { date: '2025-06-11', name: 'Poson Poya' },
-                { date: '2025-08-09', name: 'Esala Poya' },
-                { date: '2025-10-10', name: 'Milad-un-Nabi' },
-                { date: '2025-10-13', name: 'Binara Poya' },
-                { date: '2025-11-12', name: 'Vap Poya' },
-                { date: '2025-12-25', name: 'Christmas Day' }
+                { date: '2025-05-12', name: 'Vesak Full Moon Poya Day' },
+                { date: '2025-05-13', name: 'Day after Vesak Full Moon Poya Day' },
+                { date: '2025-06-07', name: 'Eid al-Adha' },
+                { date: '2025-06-10', name: 'Poson Full Moon Poya Day' },
+                { date: '2025-07-10', name: 'Esala Full Moon Poya Day' },
+                { date: '2025-08-08', name: 'Nikini Full Moon Poya Day' },
+                { date: '2025-09-05', name: 'Milad-Un-Nabi' },
+                { date: '2025-09-07', name: 'Binara Full Moon Poya Day' },
+                { date: '2025-10-06', name: 'Vap Full Moon Poya Day' },
+                { date: '2025-10-20', name: 'Deepavali' },
+                { date: '2025-11-05', name: 'Il Full Moon Poya Day' },
+                { date: '2025-12-04', name: 'Unduvap Full Moon Poya Day' },
+                { date: '2025-12-25', name: 'Christmas Day' },
+         
+                
             ],
             'IN': [
                 { date: '2025-01-26', name: 'Republic Day' },
@@ -418,9 +425,7 @@
             authMessage: document.getElementById('auth-message'),
             userNameInput: document.getElementById('user-name'),
             loginButton: document.getElementById('login-button'),
-            langSi: document.getElementById('lang-si'),
-            langEn: document.getElementById('lang-en'),
-            langTa: document.getElementById('lang-ta'),
+            langToggle: document.getElementById('lang-toggle'),
             userInfoDisplay: document.getElementById('user-info'),
             tabQr: document.getElementById('tab-qr'),
             tabCalendar: document.getElementById('tab-calendar'),
@@ -522,8 +527,7 @@
             elements.stopStopwatchButton.textContent = t.stopStopwatchButton;
             elements.resetStopwatchButton.textContent = t.resetStopwatchButton;
             elements.logoutButton.textContent = t.logoutButton;
-            document.querySelectorAll('.lang-button').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`lang-${currentLang}`).classList.add('active');
+            elements.langToggle.textContent = currentLang === 'si' ? 'English' : currentLang === 'en' ? 'தமிழ்' : 'සිංහල';
         }
 
         function populateCountryCodes() {
@@ -588,17 +592,12 @@
             toggleUI(false);
         });
 
-        document.getElementById('lang-si').addEventListener('click', () => {
-            currentLang = 'si';
+        elements.langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'si' ? 'en' : currentLang === 'en' ? 'ta' : 'si';
             updateLanguage();
-        });
-        document.getElementById('lang-en').addEventListener('click', () => {
-            currentLang = 'en';
-            updateLanguage();
-        });
-        document.getElementById('lang-ta').addEventListener('click', () => {
-            currentLang = 'ta';
-            updateLanguage();
+            if (!elements.mainAppContainer.classList.contains('hidden')) {
+                showTab(document.querySelector('.sidebar-item.active').id.replace('tab-', ''));
+            }
         });
 
         // Main tab events
