@@ -1,75 +1,757 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="si">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Portfolio</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <title>QR Code Generator and Scanner</title>
+    <!-- Tailwind CSS is used here for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 'Inter' font is used here */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+        }
+        /* Additional features for animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .scale-in {
+            animation: scaleIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        /* Styles for the camera video feed */
+        #video-feed {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+        }
+    </style>
 </head>
-<body>
-    <header>
-        <nav>
-            <div class="logo">My Portfolio</div>
-            <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#projects">Projects</a></li>
-                <li><a href="#contact">Contact</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="flex items-center justify-center min-h-screen">
+    <!-- Language toggle button -->
+    <div class="absolute top-4 right-4">
+        <button id="lang-toggle" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg shadow-md hover:bg-gray-300 transition-colors duration-200">
+            English
+        </button>
+    </div>
 
-    <section id="about" class="section">
-        <div class="container">
-            <h2>සුභ අලුත් අව්රුද්දක් වේවා!</h2>
-            <p>Hello! I'm a web developer passionate about creating beautiful and functional websites.</p>
-        </div>
-    </section>
+    <!-- Main container -->
+    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center">
 
-    <section id="projects" class="section">
-        <div class="container">
-            <h2>My Projects</h2>
-            <div class="project-grid">
-                <div class="project-item">
-                    <img src="assets/img/b.webp" alt="Project 1">
-                    <h3>Project 1</h3>
-                    <p>Description of Project 1.</p>
+        <!-- ### Authentication Section (initially visible) ### -->
+        <div id="auth-container" class="fade-in">
+            <h1 id="auth-title" class="text-4xl font-extrabold text-gray-800 mb-6">ඇප් එකට පිවිසෙන්න</h1>
+            <p id="auth-message" class="text-gray-600 mb-6">කරුණාකර ඔබගේ ඊමේල් සහ මුරපදය ඇතුළත් කරන්න.</p>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <input type="email" id="login-email" placeholder="ඊමේල් ලිපිනය" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                <!-- Password field with show/hide functionality -->
+                <div class="relative w-full mb-4">
+                    <input type="password" id="login-password" placeholder="මුරපදය" class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 pr-10">
+                    <button id="toggle-login-password" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors duration-200 focus:outline-none">
+                        <!-- Eye icon SVG -->
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="project-item">
-                    <img src="assets/img/sirimath.jpg" alt="Project 2">
-                    <h3>Project 2</h3>
-                    <p>Description of Project 2.</p>
+                <button id="login-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">පිවිසෙන්න</button>
+                <button id="show-register-button" class="mt-4 text-sm text-indigo-600 hover:underline">ලියාපදිංචි වීමට අවශ්‍යද? මෙහි ක්ලික් කරන්න.</button>
+            </div>
+
+            <!-- Registration Form (initially hidden) -->
+            <div id="register-form" class="hidden">
+                <input type="text" id="register-name" placeholder="නම" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                <input type="email" id="register-email" placeholder="ඊමේල් ලිපිනය" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                <!-- Password field with show/hide functionality -->
+                <div class="relative w-full mb-4">
+                    <input type="password" id="register-password" placeholder="මුරපදය" class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 pr-10">
+                    <button id="toggle-register-password" type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 transition-colors duration-200 focus:outline-none">
+                        <!-- Eye icon SVG -->
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="project-item">
-                    <img src="assets/img/A.webp" alt="Project 3">
-                    <h3>Project 3</h3>
-                    <p>Description of Project 3.</p>
-                </div>
-                <div class="project-item">
-                    <img src="assets/img/sampath.jpg" alt="project 4">
-                    <h3>Project 4</h3>
-                    <p>Description of Project 4.</p>
-                </div>
+                <button id="register-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">ලියාපදිංචි වන්න</button>
+                <button id="show-login-button" class="mt-4 text-sm text-indigo-600 hover:underline">ගිණුමක් තිබේද? මෙහි ක්ලික් කරන්න.</button>
             </div>
         </div>
-    </section>
 
-    <section id="contact" class="section">
-        <div class="container">
-            <h2>Contact Me</h2>
-            <form id="contactForm">
-                <input type="text" id="name" placeholder="Your Name" required>
-                <input type="email" id="email" placeholder="Your Email" required>
-                <textarea id="message" placeholder="Your Message" required></textarea>
-                <button type="submit">Send Message</button>
-            </form>
-            <p id="formResponse"></p>
+        <!-- ### QR Code Generator/Scanner Section (initially hidden) ### -->
+        <div id="qr-code-container" class="hidden">
+            <p id="user-info" class="text-sm text-gray-500 mb-4"></p>
+
+            <!-- Mode selector buttons -->
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="mode-generator" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">සාදන්නා</button>
+                <button id="mode-scanner" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">ස්කෑනරය</button>
+            </div>
+
+            <!-- QR Code Generator Section -->
+            <div id="generator-section">
+                <h1 class="text-4xl font-extrabold text-gray-800 mb-6" id="qr-title">QR කේත සාදන්න</h1>
+                
+                <!-- Generator mode selector -->
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button id="gen-mode-url" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">වෙබ් ලිපිනය</button>
+                    <button id="gen-mode-phone" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">දුරකථන අංකය</button>
+                </div>
+
+                <!-- URL Generator -->
+                <div id="url-generator-section">
+                    <p id="message-generate-url" class="text-gray-600 mb-6">කරුණාකර URL එකක් ඇතුළත් කරන්න.</p>
+                    <input type="url" id="url-input" placeholder="වෙබ් ලිපිනයක් මෙහි ඇතුළත් කරන්න" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                </div>
+
+                <!-- Phone Number Generator (initially hidden) -->
+                <div id="phone-generator-section" class="hidden">
+                    <p id="message-generate-phone" class="text-gray-600 mb-6">කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න.</p>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <select id="country-code" class="p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                            <!-- Country codes will be populated here by JavaScript -->
+                        </select>
+                        <input type="tel" id="phone-input" placeholder="දුරකථන අංකය (10 ඉලක්කම්)" class="flex-1 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                </div>
+                
+                <!-- Button to generate QR code -->
+                <button id="generate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">QR කේතය සාදන්න</button>
+
+                <!-- Area where the QR code and buttons appear -->
+                <div id="result-container" class="mt-8 scale-in">
+                    <div id="qrcode" class="flex justify-center p-4 bg-gray-100 rounded-xl"></div>
+                    <!-- Buttons for download and share -->
+                    <div id="action-buttons" class="flex justify-center space-x-4 mt-4 hidden">
+                        <!-- Download button -->
+                        <button id="download-button" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md">බාගත කරන්න</button>
+                        <!-- Share button -->
+                        <button id="share-button" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 shadow-md">බෙදාගන්න</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code Scanner Section -->
+            <div id="scanner-section" class="hidden">
+                <h1 class="text-4xl font-extrabold text-gray-800 mb-6" id="scanner-title">QR කේත ස්කෑනරය</h1>
+                <p id="message-scan" class="text-gray-600 mb-6">ස්කෑන් කිරීම ආරම්භ කිරීමට කැමරාව භාවිතා කරන්න හෝ රූපයක් උඩුගත කරන්න.</p>
+                <div class="relative w-full h-auto max-w-sm mx-auto mb-4">
+                    <video id="video-feed" autoplay playsinline class="rounded-lg w-full h-auto"></video>
+                    <canvas id="qr-canvas" class="hidden"></canvas>
+                </div>
+                <div class="flex justify-center space-x-4 mb-4">
+                    <button id="scan-button" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">කැමරාවෙන් ස්කෑන් කරන්න</button>
+                    <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-lg cursor-pointer transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md">
+                        රූපයක් උඩුගත කරන්න
+                        <input type="file" id="upload-input" accept="image/*" class="hidden">
+                    </label>
+                </div>
+                <div id="scan-result-container" class="mt-4">
+                    <p id="scan-result" class="text-center text-lg font-bold text-gray-700"></p>
+                    <button id="open-link-button" class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 hidden">වෙබ් ලිපිනය විවෘත කරන්න</button>
+                </div>
+            </div>
+            
+            <button id="logout-button" class="mt-6 text-sm text-gray-600 hover:underline">ඉවත් වන්න</button>
         </div>
-    </section>
+    </div>
 
-    <footer>
-        <p>&copy; 2025  දෙමටව අපි</p>
-    </footer>
+    <!-- JavaScript libraries for QR codes -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
 
-    <script src="assets/js/main.js"></script>
+    <script>
+        // Language package
+        const translations = {
+            si: {
+                authTitle: 'ඇප් එකට පිවිසෙන්න',
+                authMessage: 'කරුණාකර ඔබගේ ඊමේල් සහ මුරපදය ඇතුළත් කරන්න.',
+                loginEmailPlaceholder: 'ඊමේල් ලිපිනය',
+                loginPasswordPlaceholder: 'මුරපදය',
+                loginButton: 'පිවිසෙන්න',
+                showRegisterButton: 'ලියාපදිංචි වීමට අවශ්‍යද? මෙහි ක්ලික් කරන්න.',
+                registerTitle: 'ලියාපදිංචි වන්න',
+                registerMessage: 'ඔබගේ විස්තර ඇතුළත් කර ගිණුමක් සාදන්න.',
+                registerNamePlaceholder: 'නම',
+                registerEmailPlaceholder: 'ඊමේල් ලිපිනය',
+                registerPasswordPlaceholder: 'මුරපදය',
+                registerButton: 'ලියාපදිංචි වන්න',
+                showLoginButton: 'ගිණුමක් තිබේද? මෙහි ක්ලික් කරන්න.',
+                modeGenerator: 'සාදන්නා',
+                modeScanner: 'ස්කෑනරය',
+                qrTitle: 'QR කේත සාදන්න',
+                genModeUrl: 'වෙබ් ලිපිනය',
+                genModePhone: 'දුරකථන අංකය',
+                qrMessageUrl: 'කරුණාකර URL එකක් ඇතුළත් කරන්න.',
+                qrMessagePhone: 'කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න.',
+                urlInputPlaceholder: 'වෙබ් ලිපිනයක් මෙහි ඇතුළත් කරන්න',
+                phoneInputPlaceholder: 'දුරකථන අංකය (10 ඉලක්කම්)',
+                selectCountryCode: 'රටේ කේතය තෝරන්න',
+                generateButton: 'QR කේතය සාදන්න',
+                downloadButton: 'බාගත කරන්න',
+                shareButton: 'බෙදාගන්න',
+                logoutButton: 'ඉවත් වන්න',
+                scannerTitle: 'QR කේත ස්කෑනරය',
+                scannerMessage: 'ස්කෑන් කිරීම ආරම්භ කිරීමට කැමරාව භාවිතා කරන්න හෝ රූපයක් උඩුගත කරන්න.',
+                scanButton: 'කැමරාවෙන් ස්කෑන් කරන්න',
+                uploadButton: 'රූපයක් උඩුගත කරන්න',
+                successLogin: (email) => `ඔබ සාර්ථකව පිවිසුණි. (${email})`,
+                successRegister: 'ලියාපදිංචිය සාර්ථකයි! දැන් ඔබට පිවිසිය හැක.',
+                errorRegister: (error) => `ලියාපදිංචි වීමේ දෝෂයක්: ${error.message}`,
+                errorLogin: (error) => `පිවිසුම් දෝෂයක්: ${error.message}`,
+                errorFillFields: 'කරුණාකර සියලුම ක්ෂේත්‍ර පුරවන්න!',
+                errorUrlInput: 'කරුණාකර වලංගු වෙබ් ලිපිනයක් ඇතුළත් කරන්න!',
+                errorPhoneInput: 'කරුණාකර වලංගු 10-ඉලක්කම් දුරකථන අංකයක් ඇතුළත් කරන්න (0 න් ආරම්භ වන).',
+                scanResult: (result) => `ස්කෑන් කරන ලද දත්ත: ${result}`,
+                scanError: 'QR කේතයක් හඳුනා ගැනීමට නොහැකි විය.',
+                cameraError: 'කැමරාවට ප්‍රවේශ වීමේ දෝෂයක්: ',
+                shareFallback: 'ඔබගේ බ්‍රව්සරය බෙදාගැනීමේ විශේෂාංගයට සහය නොදක්වයි. කරුණාකර QR කේතය බාගත කර අතින් බෙදාගන්න.',
+                openLinkButton: 'වෙබ් ලිපිනය විවෘත කරන්න',
+                openDialerButton: 'දුරකථන අංකය අමතන්න'
+            },
+            en: {
+                authTitle: 'Log in to the App',
+                authMessage: 'Please enter your email and password.',
+                loginEmailPlaceholder: 'Email Address',
+                loginPasswordPlaceholder: 'Password',
+                loginButton: 'Log In',
+                showRegisterButton: 'Need to register? Click here.',
+                registerTitle: 'Register',
+                registerMessage: 'Enter your details and create an account.',
+                registerNamePlaceholder: 'Name',
+                registerEmailPlaceholder: 'Email Address',
+                registerPasswordPlaceholder: 'Password',
+                registerButton: 'Register',
+                showLoginButton: 'Already have an account? Click here.',
+                modeGenerator: 'Generator',
+                modeScanner: 'Scanner',
+                qrTitle: 'QR Code Maker',
+                genModeUrl: 'Web URL',
+                genModePhone: 'Phone Number',
+                qrMessageUrl: 'Please enter a URL.',
+                qrMessagePhone: 'Please enter a phone number.',
+                urlInputPlaceholder: 'Enter a URL here',
+                phoneInputPlaceholder: 'Phone Number (10 digits)',
+                selectCountryCode: 'Select Country Code',
+                generateButton: 'Generate QR Code',
+                downloadButton: 'Download',
+                shareButton: 'Share',
+                logoutButton: 'Log Out',
+                scannerTitle: 'QR Code Scanner',
+                scannerMessage: 'Use the camera to scan or upload an image to get started.',
+                scanButton: 'Scan with Camera',
+                uploadButton: 'Upload an Image',
+                successLogin: (email) => `You have successfully logged in. (${email})`,
+                successRegister: 'Registration successful! You can now log in.',
+                errorRegister: (error) => `Registration error: ${error.message}`,
+                errorLogin: (error) => `Login error: ${error.message}`,
+                errorFillFields: 'Please fill in all fields!',
+                errorUrlInput: 'Please enter a valid website URL!',
+                errorPhoneInput: 'Please enter a valid 10-digit phone number (starting with 0).',
+                scanResult: (result) => `Scanned Data: ${result}`,
+                scanError: 'Could not detect a QR code.',
+                cameraError: 'Error accessing the camera: ',
+                shareFallback: 'Your browser does not support sharing. Please download the QR code and share it manually.',
+                openLinkButton: 'Open Link',
+                openDialerButton: 'Call Phone Number'
+            }
+        };
+
+        const countryCodes = [
+            { code: '+94', name: 'Sri Lanka' },
+            { code: '+91', name: 'India' },
+            { code: '+1', name: 'USA' },
+            { code: '+44', name: 'UK' },
+            { code: '+61', name: 'Australia' }
+        ];
+
+        let currentLang = 'si';
+        let currentGeneratorMode = 'url';
+        let currentUser = null; // Stores user login status
+        let videoStream = null; // To store the camera stream
+        let lastScannedData = '';
+
+        // Get HTML elements into JavaScript variables
+        const langToggle = document.getElementById('lang-toggle');
+        const authContainer = document.getElementById('auth-container');
+        const qrCodeContainer = document.getElementById('qr-code-container');
+        const authTitle = document.getElementById('auth-title');
+        const authMessage = document.getElementById('auth-message');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const showRegisterButton = document.getElementById('show-register-button');
+        const showLoginButton = document.getElementById('show-login-button');
+        
+        const loginEmailInput = document.getElementById('login-email');
+        const loginPasswordInput = document.getElementById('login-password');
+        const loginButton = document.getElementById('login-button');
+        const toggleLoginPasswordButton = document.getElementById('toggle-login-password');
+
+        const registerNameInput = document.getElementById('register-name');
+        const registerEmailInput = document.getElementById('register-email');
+        const registerPasswordInput = document.getElementById('register-password');
+        const registerButton = document.getElementById('register-button');
+        const toggleRegisterPasswordButton = document.getElementById('toggle-register-password');
+
+        const modeGeneratorButton = document.getElementById('mode-generator');
+        const modeScannerButton = document.getElementById('mode-scanner');
+        const generatorSection = document.getElementById('generator-section');
+        const scannerSection = document.getElementById('scanner-section');
+
+        const qrTitle = document.getElementById('qr-title');
+        const urlGeneratorSection = document.getElementById('url-generator-section');
+        const phoneGeneratorSection = document.getElementById('phone-generator-section');
+        const genModeUrlButton = document.getElementById('gen-mode-url');
+        const genModePhoneButton = document.getElementById('gen-mode-phone');
+        
+        const messageGenerateUrl = document.getElementById('message-generate-url');
+        const messageGeneratePhone = document.getElementById('message-generate-phone');
+        const urlInput = document.getElementById('url-input');
+        const phoneInput = document.getElementById('phone-input');
+        const countryCodeSelect = document.getElementById('country-code');
+        const generateButton = document.getElementById('generate-button');
+        const qrcodeContainer = document.getElementById('qrcode');
+        const actionButtons = document.getElementById('action-buttons');
+        const downloadButton = document.getElementById('download-button');
+        const shareButton = document.getElementById('share-button');
+        const logoutButton = document.getElementById('logout-button');
+        const userInfoDisplay = document.getElementById('user-info');
+
+        const scannerTitle = document.getElementById('scanner-title');
+        const messageScan = document.getElementById('message-scan');
+        const videoFeed = document.getElementById('video-feed');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const scanButton = document.getElementById('scan-button');
+        const uploadInput = document.getElementById('upload-input');
+        const scanResult = document.getElementById('scan-result');
+        const openLinkButton = document.getElementById('open-link-button');
+        const canvasCtx = qrCanvas.getContext('2d');
+        
+        // Flask backend URL
+        const BACKEND_URL = "http://127.0.0.1:5000";
+
+        // Function to update all page text based on the current language
+        function updateLanguage() {
+            const t = translations[currentLang];
+            authTitle.textContent = registerForm.classList.contains('hidden') ? t.authTitle : t.registerTitle;
+            authMessage.textContent = registerForm.classList.contains('hidden') ? t.authMessage : t.registerMessage;
+            loginEmailInput.placeholder = t.loginEmailPlaceholder;
+            loginPasswordInput.placeholder = t.loginPasswordPlaceholder;
+            loginButton.textContent = t.loginButton;
+            showRegisterButton.textContent = t.showRegisterButton;
+            registerNameInput.placeholder = t.registerNamePlaceholder;
+            registerEmailInput.placeholder = t.registerEmailPlaceholder;
+            registerPasswordInput.placeholder = t.registerPasswordPlaceholder;
+            registerButton.textContent = t.registerButton;
+            showLoginButton.textContent = t.showLoginButton;
+            modeGeneratorButton.textContent = t.modeGenerator;
+            modeScannerButton.textContent = t.modeScanner;
+            qrTitle.textContent = t.qrTitle;
+            genModeUrlButton.textContent = t.genModeUrl;
+            genModePhoneButton.textContent = t.genModePhone;
+            messageGenerateUrl.textContent = t.qrMessageUrl;
+            messageGeneratePhone.textContent = t.qrMessagePhone;
+            urlInput.placeholder = t.urlInputPlaceholder;
+            phoneInput.placeholder = t.phoneInputPlaceholder;
+            generateButton.textContent = t.generateButton;
+            downloadButton.textContent = t.downloadButton;
+            shareButton.textContent = t.shareButton;
+            logoutButton.textContent = t.logoutButton;
+            scannerTitle.textContent = t.scannerTitle;
+            messageScan.textContent = t.scannerMessage;
+            scanButton.textContent = t.scanButton;
+            openLinkButton.textContent = t.openLinkButton;
+            langToggle.textContent = currentLang === 'si' ? 'English' : 'සිංහල';
+        }
+        
+        // Function to populate country codes
+        function populateCountryCodes() {
+            countryCodes.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country.code;
+                option.textContent = `${country.name} (${country.code})`;
+                countryCodeSelect.appendChild(option);
+            });
+            countryCodeSelect.value = '+94'; // Set Sri Lanka as default
+        }
+
+        // Function to toggle between the login and QR code sections
+        function toggleUI(loggedIn = false, email = null) {
+            if (loggedIn) {
+                authContainer.classList.add('hidden');
+                qrCodeContainer.classList.remove('hidden');
+                qrCodeContainer.classList.add('fade-in');
+                userInfoDisplay.textContent = translations[currentLang].successLogin(email);
+            } else {
+                authContainer.classList.remove('hidden');
+                qrCodeContainer.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                registerForm.classList.add('hidden');
+            }
+            updateLanguage();
+        }
+
+        // Language toggle button event listener
+        langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'si' ? 'en' : 'si';
+            updateLanguage();
+        });
+        
+        // User registration process
+        registerButton.addEventListener('click', async () => {
+            const name = registerNameInput.value.trim();
+            const email = registerEmailInput.value.trim();
+            const password = registerPasswordInput.value.trim();
+
+            if (!name || !email || !password) {
+                authMessage.textContent = translations[currentLang].errorFillFields;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    authMessage.textContent = translations[currentLang].successRegister;
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                } else {
+                    authMessage.textContent = result.message || translations[currentLang].errorRegister(result);
+                }
+            } catch (error) {
+                console.error("Error registering user:", error);
+                authMessage.textContent = `ලියාපදිංචි වීමේ දෝෂයක්: ${error.message}`;
+            }
+        });
+
+        // User login process
+        loginButton.addEventListener('click', async () => {
+            const email = loginEmailInput.value.trim();
+            const password = loginPasswordInput.value.trim();
+
+            if (!email || !password) {
+                authMessage.textContent = translations[currentLang].errorFillFields;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    currentUser = { email: result.email };
+                    toggleUI(true, currentUser.email);
+                } else {
+                    authMessage.textContent = result.message || translations[currentLang].errorLogin(result);
+                }
+            } catch (error) {
+                console.error("Error logging in:", error);
+                authMessage.textContent = `පිවිසුම් දෝෂයක්: ${error.message}`;
+            }
+        });
+
+        // Toggle between login and registration forms
+        showRegisterButton.addEventListener('click', () => {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            updateLanguage();
+        });
+
+        showLoginButton.addEventListener('click', () => {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            updateLanguage();
+        });
+
+        // Logout function
+        logoutButton.addEventListener('click', () => {
+            currentUser = null;
+            toggleUI(false);
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Function to toggle password visibility
+        function togglePasswordVisibility(inputElement) {
+            const type = inputElement.getAttribute('type') === 'password' ? 'text' : 'password';
+            inputElement.setAttribute('type', type);
+        }
+
+        // Event listeners for password visibility buttons
+        toggleLoginPasswordButton.addEventListener('click', () => {
+            togglePasswordVisibility(loginPasswordInput);
+        });
+
+        toggleRegisterPasswordButton.addEventListener('click', () => {
+            togglePasswordVisibility(registerPasswordInput);
+        });
+
+        // ### Generator mode selection ###
+        genModeUrlButton.addEventListener('click', () => {
+            currentGeneratorMode = 'url';
+            urlGeneratorSection.classList.remove('hidden');
+            phoneGeneratorSection.classList.add('hidden');
+            genModeUrlButton.classList.add('bg-indigo-600', 'text-white');
+            genModeUrlButton.classList.remove('bg-gray-200', 'text-gray-700');
+            genModePhoneButton.classList.add('bg-gray-200', 'text-gray-700');
+            genModePhoneButton.classList.remove('bg-indigo-600', 'text-white');
+            qrcodeContainer.innerHTML = '';
+            actionButtons.classList.add('hidden');
+        });
+
+        genModePhoneButton.addEventListener('click', () => {
+            currentGeneratorMode = 'phone';
+            urlGeneratorSection.classList.add('hidden');
+            phoneGeneratorSection.classList.remove('hidden');
+            genModePhoneButton.classList.add('bg-indigo-600', 'text-white');
+            genModePhoneButton.classList.remove('bg-gray-200', 'text-gray-700');
+            genModeUrlButton.classList.add('bg-gray-200', 'text-gray-700');
+            genModeUrlButton.classList.remove('bg-indigo-600', 'text-white');
+            qrcodeContainer.innerHTML = '';
+            actionButtons.classList.add('hidden');
+        });
+
+        // ### QR Code Generator Process ###
+        generateButton.addEventListener('click', () => {
+            let qrText = '';
+            if (currentGeneratorMode === 'url') {
+                let url = urlInput.value.trim();
+                if (url) {
+                    const urlPattern = /^(http|https):\/\/[^ "]+$/;
+                    if (!urlPattern.test(url)) {
+                        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                            url = 'https://' + url;
+                        }
+                    }
+                    if (url.endsWith('/')) {
+                        url = url.slice(0, -1);
+                    }
+                    qrText = url;
+                    messageGenerateUrl.textContent = '';
+                } else {
+                    messageGenerateUrl.textContent = translations[currentLang].errorUrlInput;
+                    actionButtons.classList.add('hidden');
+                    return;
+                }
+            } else if (currentGeneratorMode === 'phone') {
+                let phoneNumber = phoneInput.value.trim();
+                const phonePattern = /^0\d{9}$/;
+                if (phoneNumber && phonePattern.test(phoneNumber)) {
+                    const countryCode = countryCodeSelect.value;
+                    phoneNumber = phoneNumber.substring(1); // Remove the leading '0'
+                    qrText = `tel:${countryCode}${phoneNumber}`;
+                    messageGeneratePhone.textContent = '';
+                } else {
+                    messageGeneratePhone.textContent = translations[currentLang].errorPhoneInput;
+                    actionButtons.classList.add('hidden');
+                    return;
+                }
+            }
+            
+            // Remove previous QR code before creating a new one
+            qrcodeContainer.innerHTML = '';
+            
+            // Create the QR code
+            new QRCode(qrcodeContainer, {
+                text: qrText,
+                width: 200,
+                height: 200,
+                colorDark: "#333333",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            actionButtons.classList.remove('hidden');
+            // Restart animation
+            document.getElementById('result-container').classList.remove('scale-in');
+            void document.getElementById('result-container').offsetWidth;
+            document.getElementById('result-container').classList.add('scale-in');
+        });
+
+        // Download button event listener
+        downloadButton.addEventListener('click', () => {
+            const qrCanvas = qrcodeContainer.querySelector('canvas');
+            if (qrCanvas) {
+                const image = qrCanvas.toDataURL("image/png");
+                const link = document.createElement('a');
+                link.href = image;
+                link.download = 'qrcode.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+
+        // Share button event listener
+        shareButton.addEventListener('click', async () => {
+            const qrCanvas = qrcodeContainer.querySelector('canvas');
+            if (!qrCanvas) {
+                return;
+            }
+
+            try {
+                if (navigator.share) {
+                    const blob = await new Promise(resolve => qrCanvas.toBlob(resolve, 'image/png'));
+                    const file = new File([blob], 'qrcode.png', { type: 'image/png' });
+
+                    await navigator.share({
+                        files: [file],
+                        title: 'QR Code',
+                        text: 'This is a QR code I generated with the QR Code Maker app!',
+                    });
+                } else {
+                    alert(translations[currentLang].shareFallback);
+                }
+            } catch (error) {
+                console.error('Sharing failed:', error);
+            }
+        });
+
+        // ### Mode Selection ###
+        modeGeneratorButton.addEventListener('click', () => {
+            generatorSection.classList.remove('hidden');
+            scannerSection.classList.add('hidden');
+            modeGeneratorButton.classList.add('bg-indigo-600', 'text-white');
+            modeGeneratorButton.classList.remove('bg-gray-200', 'text-gray-700');
+            modeScannerButton.classList.add('bg-gray-200', 'text-gray-700');
+            modeScannerButton.classList.remove('bg-indigo-600', 'text-white');
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        modeScannerButton.addEventListener('click', () => {
+            generatorSection.classList.add('hidden');
+            scannerSection.classList.remove('hidden');
+            modeScannerButton.classList.add('bg-indigo-600', 'text-white');
+            modeScannerButton.classList.remove('bg-gray-200', 'text-gray-700');
+            modeGeneratorButton.classList.add('bg-gray-200', 'text-gray-700');
+            modeGeneratorButton.classList.remove('bg-indigo-600', 'text-white');
+            scanResult.textContent = '';
+            openLinkButton.classList.add('hidden');
+        });
+
+        // ### QR Code Scanner Logic ###
+        let scanning = false;
+        function tick() {
+            if (videoFeed.readyState === videoFeed.HAVE_ENOUGH_DATA) {
+                qrCanvas.hidden = false;
+                qrCanvas.height = videoFeed.videoHeight;
+                qrCanvas.width = videoFeed.videoWidth;
+                canvasCtx.drawImage(videoFeed, 0, 0, qrCanvas.width, qrCanvas.height);
+                const imageData = canvasCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+                
+                if (code) {
+                    handleScannedData(code.data);
+                    videoStream.getTracks().forEach(track => track.stop());
+                    scanning = false;
+                    return;
+                }
+            }
+            if (scanning) {
+                requestAnimationFrame(tick);
+            }
+        }
+        
+        scanButton.addEventListener('click', async () => {
+            scanResult.textContent = '';
+            openLinkButton.classList.add('hidden');
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                videoFeed.srcObject = videoStream;
+                scanning = true;
+                tick();
+            } catch (err) {
+                console.error("Camera access denied: ", err);
+                scanResult.textContent = translations[currentLang].cameraError + err.message;
+            }
+        });
+
+        // Upload functionality
+        uploadInput.addEventListener('change', (e) => {
+            scanResult.textContent = '';
+            openLinkButton.classList.add('hidden');
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        qrCanvas.width = img.width;
+                        qrCanvas.height = img.height;
+                        canvasCtx.drawImage(img, 0, 0, img.width, img.height);
+                        const imageData = canvasCtx.getImageData(0, 0, img.width, img.height);
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code) {
+                            handleScannedData(code.data);
+                        } else {
+                            scanResult.textContent = translations[currentLang].scanError;
+                            openLinkButton.classList.add('hidden');
+                        }
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle scanned data
+        function handleScannedData(data) {
+            lastScannedData = data;
+            const urlPattern = /^(http|https):\/\/[^ "]+$/;
+            const telPattern = /^tel:\+\d+$/;
+            
+            scanResult.textContent = translations[currentLang].scanResult(data);
+            
+            if (urlPattern.test(data)) {
+                openLinkButton.textContent = translations[currentLang].openLinkButton;
+                openLinkButton.classList.remove('hidden');
+            } else if (telPattern.test(data)) {
+                openLinkButton.textContent = translations[currentLang].openDialerButton;
+                openLinkButton.classList.remove('hidden');
+            } else {
+                openLinkButton.classList.add('hidden');
+            }
+        }
+        
+        // Event listener for the "Open Link" button
+        openLinkButton.addEventListener('click', () => {
+            if (lastScannedData) {
+                window.open(lastScannedData, '_blank');
+            }
+        });
+
+        // Initial language setup
+        updateLanguage();
+        populateCountryCodes();
+    </script>
 </body>
 </html>
