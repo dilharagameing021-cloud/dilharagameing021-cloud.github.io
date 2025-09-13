@@ -3,201 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Generator and Scanner</title>
+    <title>QR කේත, ඔරලෝසු සහ දින දර්ශන යෙදුම</title>
         <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 'Inter' font is used here */
+        /* Custom styles for the app */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* Light gray background */
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .tab-button {
+            border-radius: 9999px;
+            transition: background-color 0.3s, color 0.3s;
         }
-        /* Additional features for animations */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        .tab-button.active {
+            background-color: #4f46e5;
+            color: white;
         }
-        .scale-in {
-            animation: scaleIn 0.3s ease-in-out;
+        .sub-tab-button {
+            border-radius: 9999px;
+            transition: all 0.3s;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        .sub-tab-button.active {
+            background-color: #1d4ed8;
+            color: white;
         }
-        @keyframes scaleIn {
-            from { transform: scale(0.95); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        /* Styles for the camera video feed */
-        #video-feed {
-            width: 100%;
-            max-width: 400px;
-            height: auto;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin: 0 auto;
-        }
+        /* For calendar highlighting */
+        .holiday { background-color: #fca5a5; font-weight: bold; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
-        <div class="absolute top-4 right-4">
+        <div class="absolute top-4 right-4 z-50">
         <button id="lang-toggle" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg shadow-md hover:bg-gray-300 transition-colors duration-200">
             English
         </button>
     </div>
 
-        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-sm w-full mx-4 text-center">
+        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-2xl max-w-lg w-full mx-4 text-center">
 
-                <div id="auth-container" class="fade-in">
-            <h1 id="auth-title" class="text-4xl font-extrabold text-gray-800 mb-6">QR කේත ඇප් එක</h1>
+                <div id="auth-container">
+            <h1 id="auth-title" class="text-4xl font-extrabold text-gray-800 mb-6">QR කේත, ඔරලෝසු සහ දින දර්ශන යෙදුම</h1>
             <p id="auth-message" class="text-gray-600 mb-6">කරුණාකර ඔබගේ නම ඇතුළත් කරන්න.</p>
-
-                        <div id="login-form">
+            <div id="login-form">
                 <input type="text" id="user-name" placeholder="ඔබගේ නම" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
                 <button id="login-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">ඉදිරියට යන්න</button>
             </div>
         </div>
 
-                <div id="qr-code-container" class="hidden">
+                <div id="main-app-container" class="hidden">
             <p id="user-info" class="text-sm text-gray-500 mb-4"></p>
-
-                        <div class="flex justify-center space-x-4 mb-6">
-                <button id="mode-generator" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">සාදන්නා</button>
-                <button id="mode-scanner" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">ස්කෑනරය</button>
+            
+                        <div class="flex justify-around bg-gray-100 rounded-full p-1 mb-6">
+                <button id="tab-qr" class="tab-button active py-2 px-4 flex-1 text-sm font-semibold text-gray-700">QR කේතය</button>
+                <button id="tab-calendar" class="tab-button py-2 px-4 flex-1 text-sm font-semibold text-gray-700">දින දර්ශනය</button>
+                <button id="tab-clock" class="tab-button py-2 px-4 flex-1 text-sm font-semibold text-gray-700">ඔරලෝසුව</button>
             </div>
 
-                        <div id="generator-section">
-                <h1 class="text-4xl font-extrabold text-gray-800 mb-6" id="qr-title">QR කේත සාදන්න</h1>
-                
+                        <div id="qr-section">
                                 <div class="flex justify-center space-x-4 mb-6">
-                    <button id="gen-mode-url" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">වෙබ් ලිපිනය</button>
-                    <button id="gen-mode-phone" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">දුරකථන අංකය</button>
+                    <button id="mode-generator" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">සාදන්නා</button>
+                    <button id="mode-scanner" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg transition-colors duration-200 shadow-md">ස්කෑනරය</button>
                 </div>
-
-                                <div id="url-generator-section">
-                    <p id="message-generate-url" class="text-gray-600 mb-6">කරුණාකර URL එකක් ඇතුළත් කරන්න.</p>
-                    <input type="url" id="url-input" placeholder="වෙබ් ලිපිනයක් මෙහි ඇතුළත් කරන්න" class="w-full p-4 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
-                </div>
-
-                                <div id="phone-generator-section" class="hidden">
-                    <p id="message-generate-phone" class="text-gray-600 mb-6">කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න.</p>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <select id="country-code" class="p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
-                                                    </select>
-                        <input type="tel" id="phone-input" placeholder="දුරකථන අංකය (10 ඉලක්කම්)" class="flex-1 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:border-transparent transition-all duration-300">
+                
+                                <div id="generator-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4" id="qr-title">QR කේත සාදන්න</h2>
+                    <div class="flex justify-center space-x-2 mb-4">
+                        <button id="gen-mode-url" class="sub-tab-button active flex-1 py-2 px-4 text-sm font-medium bg-blue-600 text-white">වෙබ් ලිපිනය</button>
+                        <button id="gen-mode-phone" class="sub-tab-button flex-1 py-2 px-4 text-sm font-medium bg-gray-200 text-gray-700">දුරකථන අංකය</button>
+                    </div>
+                    <div id="url-generator-section">
+                        <input type="url" id="url-input" placeholder="වෙබ් ලිපිනයක් ඇතුළත් කරන්න" class="w-full p-3 mb-4 border border-gray-300 rounded-lg">
+                    </div>
+                    <div id="phone-generator-section" class="hidden">
+                        <div class="flex space-x-2 mb-4">
+                            <select id="country-code" class="p-3 border border-gray-300 rounded-lg"></select>
+                            <input type="tel" id="phone-input" placeholder="දුරකථන අංකය" class="flex-1 p-3 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+                    <button id="generate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">QR කේතය සාදන්න</button>
+                    <div id="qrcode" class="mt-6 flex justify-center"></div>
+                    <div id="action-buttons" class="flex justify-center space-x-4 mt-4 hidden">
+                        <button id="download-button" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg">බාගත කරන්න</button>
+                        <button id="share-button" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg">බෙදාගන්න</button>
                     </div>
                 </div>
                 
-                                <button id="generate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">QR කේතය සාදන්න</button>
-
-                                <div id="result-container" class="mt-8 scale-in">
-                    <div id="qrcode" class="flex justify-center p-4 bg-gray-100 rounded-xl"></div>
-                                        <div id="action-buttons" class="flex justify-center space-x-4 mt-4 hidden">
-                                                <button id="download-button" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md">බාගත කරන්න</button>
-                                                <button id="share-button" class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-sky-500 focus:ring-opacity-50 shadow-md">බෙදාගන්න</button>
+                                <div id="scanner-section" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4" id="scanner-title">QR කේත ස්කෑනරය</h2>
+                    <div class="relative w-full h-auto max-w-sm mx-auto mb-4">
+                        <video id="video-feed" autoplay playsinline class="rounded-lg w-full h-auto"></video>
+                        <canvas id="qr-canvas" class="hidden"></canvas>
+                    </div>
+                    <button id="scan-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg mb-2">කැමරාවෙන් ස්කෑන් කරන්න</button>
+                    <label class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg cursor-pointer block">
+                        <input type="file" id="upload-input" accept="image/*" class="hidden">
+                        රූපයක් උඩුගත කරන්න
+                    </label>
+                    <div id="scan-result-container" class="mt-4">
+                        <p id="scan-result" class="text-center text-lg font-bold text-gray-700"></p>
+                        <button id="open-link-button" class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hidden">වෙබ් ලිපිනය විවෘත කරන්න</button>
                     </div>
                 </div>
             </div>
+            
+                        <div id="calendar-section" class="hidden">
+                <h2 id="calendar-title" class="text-2xl font-bold text-gray-800 mb-4">දින දර්ශනය</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prev-month" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <h3 id="current-month-year" class="text-lg font-bold text-gray-800"></h3>
+                    <button id="next-month" class="bg-gray-200 p-2 rounded-full hover:bg-gray-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="grid grid-cols-7 gap-2 text-sm font-semibold text-gray-600">
+                    <div id="day-sunday">ඉරිදා</div>
+                    <div id="day-monday">සඳුදා</div>
+                    <div id="day-tuesday">අඟහරුවාදා</div>
+                    <div id="day-wednesday">බදාදා</div>
+                    <div id="day-thursday">බ්‍රහස්පතින්දා</div>
+                    <div id="day-friday">සිකුරාදා</div>
+                    <div id="day-saturday">සෙනසුරාදා</div>
+                </div>
+                <div id="calendar-days" class="grid grid-cols-7 gap-2 text-gray-800 mt-2"></div>
+                <div class="mt-4 p-3 bg-gray-100 rounded-lg text-sm text-gray-700 text-left">
+                    <p id="holiday-info" class="font-bold">නිවාඩු දින:</p>
+                    <ul id="holiday-list" class="list-disc list-inside mt-1"></ul>
+                </div>
+            </div>
 
-                        <div id="scanner-section" class="hidden">
-                <h1 class="text-4xl font-extrabold text-gray-800 mb-6" id="scanner-title">QR කේත ස්කෑනරය</h1>
-                <p id="message-scan" class="text-gray-600 mb-6">ස්කෑන් කිරීම ආරම්භ කිරීමට කැමරාව භාවිතා කරන්න හෝ රූපයක් උඩුගත කරන්න.</p>
-                <div class="relative w-full h-auto max-w-sm mx-auto mb-4">
-                    <video id="video-feed" autoplay playsinline class="rounded-lg w-full h-auto"></video>
-                    <canvas id="qr-canvas" class="hidden"></canvas>
+                        <div id="clock-section" class="hidden">
+                <h2 id="clock-title" class="text-2xl font-bold text-gray-800 mb-4">ඔරලෝසුව</h2>
+                
+                                <div class="flex justify-around bg-gray-100 rounded-full p-1 mb-6">
+                    <button id="sub-tab-current" class="sub-tab-button active flex-1 py-2 px-4 text-sm font-medium bg-blue-600 text-white">වර්තමාන වේලාව</button>
+                    <button id="sub-tab-world" class="sub-tab-button flex-1 py-2 px-4 text-sm font-medium bg-gray-200 text-gray-700">ලෝක වේලාව</button>
+                    <button id="sub-tab-alarm" class="sub-tab-button flex-1 py-2 px-4 text-sm font-medium bg-gray-200 text-gray-700">එලාම්</button>
+                    <button id="sub-tab-stopwatch" class="sub-tab-button flex-1 py-2 px-4 text-sm font-medium bg-gray-200 text-gray-700">ස්ටොප් වොච්</button>
                 </div>
-                <div class="flex justify-center space-x-4 mb-4">
-                    <button id="scan-button" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-4 rounded-lg transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-indigo-500 focus:ring-opacity-50 shadow-md">කැමරාවෙන් ස්කෑන් කරන්න</button>
-                    <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-4 rounded-lg cursor-pointer transition-colors transform hover:scale-105 duration-300 focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 shadow-md">
-                        රූපයක් උඩුගත කරන්න
-                        <input type="file" id="upload-input" accept="image/*" class="hidden">
-                    </label>
+                
+                                <div id="current-time-section">
+                    <div class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-2" id="current-time"></div>
+                    <div class="text-lg text-gray-600 mb-6" id="current-date"></div>
                 </div>
-                <div id="scan-result-container" class="mt-4">
-                    <p id="scan-result" class="text-center text-lg font-bold text-gray-700"></p>
-                    <button id="open-link-button" class="mt-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 hidden">වෙබ් ලිපිනය විවෘත කරන්න</button>
+                
+                                <div id="world-clock-section" class="hidden text-left">
+                    <div id="world-clock-list"></div>
+                </div>
+                
+                                <div id="alarm-section" class="hidden">
+                    <h3 class="text-xl font-bold mb-4" id="alarm-title">එලාම් එකක් සකසන්න</h3>
+                    <input type="time" id="alarm-time-input" class="p-3 border border-gray-300 rounded-lg w-full mb-4">
+                    <button id="set-alarm-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg">එලාම් සකසන්න</button>
+                    <p id="alarm-status" class="mt-4 text-green-600 font-semibold hidden"></p>
+                </div>
+                
+                                <div id="stopwatch-section" class="hidden">
+                    <h3 class="text-xl font-bold mb-4" id="stopwatch-title">ස්ටොප් වොච්</h3>
+                    <div class="text-5xl font-extrabold text-gray-900 mb-4" id="stopwatch-display">00:00:00</div>
+                    <div class="flex justify-center space-x-4">
+                        <button id="start-stopwatch-button" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg">ආරම්භ කරන්න</button>
+                        <button id="stop-stopwatch-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg hidden">නවත්වන්න</button>
+                        <button id="reset-stopwatch-button" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-4 rounded-lg">නැවත සකසන්න</button>
+                    </div>
                 </div>
             </div>
             
             <button id="logout-button" class="mt-6 text-sm text-gray-600 hover:underline">ආපසු යන්න</button>
         </div>
     </div>
-
         <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.min.js"></script>
-
+    
     <script>
-        // Language package
+        // Language translations object
         const translations = {
             si: {
-                authTitle: 'QR කේත ඇප් එක',
+                appTitle: 'QR කේත, ඔරලෝසු සහ දින දර්ශන යෙදුම',
                 authMessage: 'කරුණාකර ඔබගේ නම ඇතුළත් කරන්න.',
-                loginNamePlaceholder: 'ඔබගේ නම',
                 loginButton: 'ඉදිරියට යන්න',
+                tabQr: 'QR කේතය',
+                tabCalendar: 'දින දර්ශනය',
+                tabClock: 'ඔරලෝසුව',
                 modeGenerator: 'සාදන්නා',
                 modeScanner: 'ස්කෑනරය',
                 qrTitle: 'QR කේත සාදන්න',
                 genModeUrl: 'වෙබ් ලිපිනය',
                 genModePhone: 'දුරකථන අංකය',
-                qrMessageUrl: 'කරුණාකර URL එකක් ඇතුළත් කරන්න.',
-                qrMessagePhone: 'කරුණාකර දුරකථන අංකයක් ඇතුළත් කරන්න.',
-                urlInputPlaceholder: 'වෙබ් ලිපිනයක් මෙහි ඇතුළත් කරන්න',
-                phoneInputPlaceholder: 'දුරකථන අංකය (10 ඉලක්කම්)',
-                selectCountryCode: 'රටේ කේතය තෝරන්න',
+                urlInputPlaceholder: 'වෙබ් ලිපිනයක් ඇතුළත් කරන්න',
+                phoneInputPlaceholder: 'දුරකථන අංකය',
                 generateButton: 'QR කේතය සාදන්න',
                 downloadButton: 'බාගත කරන්න',
                 shareButton: 'බෙදාගන්න',
-                logoutButton: 'ආපසු යන්න',
                 scannerTitle: 'QR කේත ස්කෑනරය',
-                scannerMessage: 'ස්කෑන් කිරීම ආරම්භ කිරීමට කැමරාව භාවිතා කරන්න හෝ රූපයක් උඩුගත කරන්න.',
                 scanButton: 'කැමරාවෙන් ස්කෑන් කරන්න',
                 uploadButton: 'රූපයක් උඩුගත කරන්න',
+                openLinkButton: 'වෙබ් ලිපිනය විවෘත කරන්න',
+                openDialerButton: 'දුරකථන අංකය අමතන්න',
+                calendarTitle: 'දින දර්ශනය',
+                days: ['ඉරිදා', 'සඳුදා', 'අඟහරුවාදා', 'බදාදා', 'බ්‍රහස්පතින්දා', 'සිකුරාදා', 'සෙනසුරාදා'],
+                months: ['ජනවාරි', 'පෙබරවාරි', 'මාර්තු', 'අප්‍රේල්', 'මැයි', 'ජූනි', 'ජූලි', 'අගෝස්තු', 'සැප්තැම්බර්', 'ඔක්තෝබර්', 'නොවැම්බර්', 'දෙසැම්බර්'],
+                holidayInfo: 'නිවාඩු දින:',
+                clockTitle: 'ඔරලෝසුව',
+                subTabCurrent: 'වර්තමාන වේලාව',
+                subTabWorld: 'ලෝක වේලාව',
+                subTabAlarm: 'එලාම්',
+                subTabStopwatch: 'ස්ටොප් වොච්',
+                alarmTitle: 'එලාම් එකක් සකසන්න',
+                setAlarmButton: 'එලාම් සකසන්න',
+                stopwatchTitle: 'ස්ටොප් වොච්',
+                startStopwatchButton: 'ආරම්භ කරන්න',
+                stopStopwatchButton: 'නවත්වන්න',
+                resetStopwatchButton: 'නැවත සකසන්න',
+                logoutButton: 'ආපසු යන්න',
                 successLogin: (name) => `ආයුබෝවන් ${name}!`,
-                errorFillFields: 'කරුණාකර ඔබේ නම ඇතුළත් කරන්න!',
+                errorFillFields: 'කරුණාකර සියලු ක්ෂේත්‍ර පුරවන්න!',
                 errorUrlInput: 'කරුණාකර වලංගු වෙබ් ලිපිනයක් ඇතුළත් කරන්න!',
-                errorPhoneInput: 'කරුණාකර වලංගු 10-ඉලක්කම් දුරකථන අංකයක් ඇතුළත් කරන්න (0 න් ආරම්භ වන).',
                 scanResult: (result) => `ස්කෑන් කරන ලද දත්ත: ${result}`,
                 scanError: 'QR කේතයක් හඳුනා ගැනීමට නොහැකි විය.',
                 cameraError: 'කැමරාවට ප්‍රවේශ වීමේ දෝෂයක්: ',
-                shareFallback: 'ඔබගේ බ්‍රව්සරය බෙදාගැනීමේ විශේෂාංගයට සහය නොදක්වයි. කරුණාකර QR කේතය බාගත කර අතින් බෙදාගන්න.',
-                openLinkButton: 'වෙබ් ලිපිනය විවෘත කරන්න',
-                openDialerButton: 'දුරකථන අංකය අමතන්න'
+                shareFallback: 'ඔබගේ බ්‍රව්සරය බෙදාගැනීමේ විශේෂාංගයට සහය නොදක්වයි.',
+                alarmSetMessage: (time) => `එලාම් එක ${time} ට සකසා ඇත.`,
+                alarmTitleDialog: 'එලාම් එක නාද වේ!',
+                alarmMessageDialog: 'ඔබ නියම කළ වේලාවට එලාම් එක නාද වේ.',
+                alarmDismissButton: 'හරි'
             },
             en: {
-                authTitle: 'QR Code App',
+                appTitle: 'QR Code, Clock & Calendar App',
                 authMessage: 'Please enter your name.',
-                loginNamePlaceholder: 'Your Name',
                 loginButton: 'Continue',
+                tabQr: 'QR Code',
+                tabCalendar: 'Calendar',
+                tabClock: 'Clock',
                 modeGenerator: 'Generator',
                 modeScanner: 'Scanner',
-                qrTitle: 'QR Code Maker',
+                qrTitle: 'QR Code Generator',
                 genModeUrl: 'Web URL',
                 genModePhone: 'Phone Number',
-                qrMessageUrl: 'Please enter a URL.',
-                qrMessagePhone: 'Please enter a phone number.',
-                urlInputPlaceholder: 'Enter a URL here',
-                phoneInputPlaceholder: 'Phone Number (10 digits)',
-                selectCountryCode: 'Select Country Code',
+                urlInputPlaceholder: 'Enter a URL',
+                phoneInputPlaceholder: 'Phone Number',
                 generateButton: 'Generate QR Code',
                 downloadButton: 'Download',
                 shareButton: 'Share',
-                logoutButton: 'Go Back',
                 scannerTitle: 'QR Code Scanner',
-                scannerMessage: 'Use the camera to scan or upload an image to get started.',
                 scanButton: 'Scan with Camera',
-                uploadButton: 'Upload an Image',
+                uploadButton: 'Upload Image',
+                openLinkButton: 'Open Link',
+                openDialerButton: 'Call Phone Number',
+                calendarTitle: 'Calendar',
+                days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+                holidayInfo: 'Holidays:',
+                clockTitle: 'Clock',
+                subTabCurrent: 'Current Time',
+                subTabWorld: 'World Clock',
+                subTabAlarm: 'Alarm',
+                subTabStopwatch: 'Stopwatch',
+                alarmTitle: 'Set an Alarm',
+                setAlarmButton: 'Set Alarm',
+                stopwatchTitle: 'Stopwatch',
+                startStopwatchButton: 'Start',
+                stopStopwatchButton: 'Stop',
+                resetStopwatchButton: 'Reset',
+                logoutButton: 'Go Back',
                 successLogin: (name) => `Hello, ${name}!`,
-                errorFillFields: 'Please enter your name!',
+                errorFillFields: 'Please fill in all fields!',
                 errorUrlInput: 'Please enter a valid website URL!',
-                errorPhoneInput: 'Please enter a valid 10-digit phone number (starting with 0).',
                 scanResult: (result) => `Scanned Data: ${result}`,
                 scanError: 'Could not detect a QR code.',
                 cameraError: 'Error accessing the camera: ',
-                shareFallback: 'Your browser does not support sharing. Please download the QR code and share it manually.',
-                openLinkButton: 'Open Link',
-                openDialerButton: 'Call Phone Number'
+                shareFallback: 'Your browser does not support sharing.',
+                alarmSetMessage: (time) => `Alarm is set for ${time}.`,
+                alarmTitleDialog: 'Alarm!',
+                alarmMessageDialog: 'The alarm is ringing at the set time.',
+                alarmDismissButton: 'OK'
+            },
+            ta: {
+                appTitle: 'QR குறியீடு, கடிகாரம் & நாட்காட்டி செயலி',
+                authMessage: 'உங்கள் பெயரை உள்ளிடவும்.',
+                loginButton: 'தொடரவும்',
+                tabQr: 'QR குறியீடு',
+                tabCalendar: 'நாட்காட்டி',
+                tabClock: 'கடிகாரம்',
+                modeGenerator: 'உருவாக்கி',
+                modeScanner: 'ஸ்கேனர்',
+                qrTitle: 'QR குறியீடு உருவாக்குங்கள்',
+                genModeUrl: 'இணைய முகவரி',
+                genModePhone: 'தொலைபேசி எண்',
+                urlInputPlaceholder: 'இணைய முகவரியை உள்ளிடவும்',
+                phoneInputPlaceholder: 'தொலைபேசி எண்',
+                generateButton: 'QR குறியீட்டை உருவாக்குங்கள்',
+                downloadButton: 'பதிவிறக்கு',
+                shareButton: 'பகிர்',
+                scannerTitle: 'QR குறியீடு ஸ்கேனர்',
+                scanButton: 'கேமராவால் ஸ்கேன் செய்',
+                uploadButton: 'படத்தை பதிவேற்று',
+                openLinkButton: 'இணைப்பை திற',
+                openDialerButton: 'தொலைபேசி எண்ணை அழைக்கவும்',
+                calendarTitle: 'நாட்காட்டி',
+                days: ['ஞாயிறு', 'திங்கள்', 'செவ்வாய்', 'புதன்', 'வியாழன்', 'வெள்ளி', 'சனி'],
+                months: ['ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்', 'ஜூலை', 'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்'],
+                holidayInfo: 'விடுமுறை நாட்கள்:',
+                clockTitle: 'கடிகாரம்',
+                subTabCurrent: 'தற்போதைய நேரம்',
+                subTabWorld: 'உலக நேரம்',
+                subTabAlarm: 'அலாரம்',
+                subTabStopwatch: 'நிறுத்து கடிகாரம்',
+                alarmTitle: 'ஒரு அலாரத்தை அமைக்கவும்',
+                setAlarmButton: 'அலாரத்தை அமை',
+                stopwatchTitle: 'நிறுத்து கடிகாரம்',
+                startStopwatchButton: 'தொடங்கு',
+                stopStopwatchButton: 'நிறுத்து',
+                resetStopwatchButton: 'மீட்டமை',
+                logoutButton: 'பின்னோக்கிச் செல்',
+                successLogin: (name) => `வணக்கம், ${name}!`,
+                errorFillFields: 'அனைத்து புலங்களையும் பூர்த்தி செய்யவும்!',
+                errorUrlInput: 'சரியான இணைய முகவரியை உள்ளிடவும்!',
+                scanResult: (result) => `ஸ்கேன் செய்யப்பட்ட தரவு: ${result}`,
+                scanError: 'QR குறியீட்டைக் கண்டறிய முடியவில்லை.',
+                cameraError: 'கேமராவை அணுகுவதில் பிழை: ',
+                shareFallback: 'உங்கள் உலாவி பகிர்தல் அம்சத்தை ஆதரிக்கவில்லை.',
+                alarmSetMessage: (time) => `அலாரம் ${time} க்கு அமைக்கப்பட்டுள்ளது.`,
+                alarmTitleDialog: 'அலாரம்!',
+                alarmMessageDialog: 'அலாரம் ஒலிக்கும் நேரம்.',
+                alarmDismissButton: 'சரி'
             }
         };
-
         const countryCodes = [
             { code: '+94', name: 'Sri Lanka' },
             { code: '+91', name: 'India' },
@@ -205,194 +338,274 @@
             { code: '+44', name: 'UK' },
             { code: '+61', name: 'Australia' }
         ];
-
+        const worldClockTimezones = [
+            { name: 'New York', timezone: 'America/New_York' },
+            { name: 'London', timezone: 'Europe/London' },
+            { name: 'Tokyo', timezone: 'Asia/Tokyo' },
+            { name: 'Sydney', timezone: 'Australia/Sydney' }
+        ];
+        const holidays = [
+            // Sri Lanka's public holidays (for example)
+            { date: '2025-01-14', name: 'Tamil Thai Pongal Day' },
+            { date: '2025-02-04', name: 'Independence Day' },
+            { date: '2025-05-01', name: 'May Day' },
+            { date: '2025-05-12', name: 'Vesak Poya' },
+            { date: '2025-06-11', name: 'Poson Poya' },
+            { date: '2025-08-09', name: 'Esala Poya' },
+            { date: '2025-10-10', name: 'Milad-un-Nabi' },
+            { date: '2025-10-13', name: 'Binara Poya' },
+            { date: '2025-11-12', name: 'Vap Poya' },
+            { date: '2025-12-25', name: 'Christmas Day' }
+        ];
         let currentLang = 'si';
         let currentGeneratorMode = 'url';
-        let currentUser = null; // Stores user login status
-        let videoStream = null; // To store the camera stream
+        let currentUser = null;
+        let videoStream = null;
         let lastScannedData = '';
-
-        // Get HTML elements into JavaScript variables
-        const langToggle = document.getElementById('lang-toggle');
-        const authContainer = document.getElementById('auth-container');
-        const qrCodeContainer = document.getElementById('qr-code-container');
-        const authTitle = document.getElementById('auth-title');
-        const authMessage = document.getElementById('auth-message');
-        const loginForm = document.getElementById('login-form');
-        const userNameInput = document.getElementById('user-name');
-        const loginButton = document.getElementById('login-button');
+        let currentDate = new Date();
+        let stopwatchInterval = null;
+        let stopwatchTime = 0;
+        let alarmInterval = null;
+        const elements = {
+            authContainer: document.getElementById('auth-container'),
+            mainAppContainer: document.getElementById('main-app-container'),
+            authTitle: document.getElementById('auth-title'),
+            authMessage: document.getElementById('auth-message'),
+            userNameInput: document.getElementById('user-name'),
+            loginButton: document.getElementById('login-button'),
+            langToggle: document.getElementById('lang-toggle'),
+            userInfoDisplay: document.getElementById('user-info'),
+            tabQr: document.getElementById('tab-qr'),
+            tabCalendar: document.getElementById('tab-calendar'),
+            tabClock: document.getElementById('tab-clock'),
+            qrSection: document.getElementById('qr-section'),
+            calendarSection: document.getElementById('calendar-section'),
+            clockSection: document.getElementById('clock-section'),
+            // QR Section
+            modeGeneratorButton: document.getElementById('mode-generator'),
+            modeScannerButton: document.getElementById('mode-scanner'),
+            generatorSection: document.getElementById('generator-section'),
+            scannerSection: document.getElementById('scanner-section'),
+            qrTitle: document.getElementById('qr-title'),
+            genModeUrlButton: document.getElementById('gen-mode-url'),
+            genModePhoneButton: document.getElementById('gen-mode-phone'),
+            urlGeneratorSection: document.getElementById('url-generator-section'),
+            phoneGeneratorSection: document.getElementById('phone-generator-section'),
+            urlInput: document.getElementById('url-input'),
+            phoneInput: document.getElementById('phone-input'),
+            countryCodeSelect: document.getElementById('country-code'),
+            generateButton: document.getElementById('generate-button'),
+            qrcodeContainer: document.getElementById('qrcode'),
+            actionButtons: document.getElementById('action-buttons'),
+            downloadButton: document.getElementById('download-button'),
+            shareButton: document.getElementById('share-button'),
+            scannerTitle: document.getElementById('scanner-title'),
+            videoFeed: document.getElementById('video-feed'),
+            qrCanvas: document.getElementById('qr-canvas'),
+            scanButton: document.getElementById('scan-button'),
+            uploadInput: document.getElementById('upload-input'),
+            scanResult: document.getElementById('scan-result'),
+            openLinkButton: document.getElementById('open-link-button'),
+            logoutButton: document.getElementById('logout-button'),
+            // Calendar Section
+            calendarTitle: document.getElementById('calendar-title'),
+            prevMonthButton: document.getElementById('prev-month'),
+            nextMonthButton: document.getElementById('next-month'),
+            currentMonthYear: document.getElementById('current-month-year'),
+            calendarDays: document.getElementById('calendar-days'),
+            holidayInfo: document.getElementById('holiday-info'),
+            holidayList: document.getElementById('holiday-list'),
+            // Clock Section
+            clockTitle: document.getElementById('clock-title'),
+            subTabCurrent: document.getElementById('sub-tab-current'),
+            subTabWorld: document.getElementById('sub-tab-world'),
+            subTabAlarm: document.getElementById('sub-tab-alarm'),
+            subTabStopwatch: document.getElementById('sub-tab-stopwatch'),
+            currentTimeSection: document.getElementById('current-time-section'),
+            worldClockSection: document.getElementById('world-clock-section'),
+            alarmSection: document.getElementById('alarm-section'),
+            stopwatchSection: document.getElementById('stopwatch-section'),
+            currentTimeDisplay: document.getElementById('current-time'),
+            currentDateDisplay: document.getElementById('current-date'),
+            worldClockList: document.getElementById('world-clock-list'),
+            alarmTimeInput: document.getElementById('alarm-time-input'),
+            setAlarmButton: document.getElementById('set-alarm-button'),
+            alarmStatus: document.getElementById('alarm-status'),
+            stopwatchDisplay: document.getElementById('stopwatch-display'),
+            startStopwatchButton: document.getElementById('start-stopwatch-button'),
+            stopStopwatchButton: document.getElementById('stop-stopwatch-button'),
+            resetStopwatchButton: document.getElementById('reset-stopwatch-button'),
+        };
+        const canvasCtx = elements.qrCanvas.getContext('2d');
         
-        const modeGeneratorButton = document.getElementById('mode-generator');
-        const modeScannerButton = document.getElementById('mode-scanner');
-        const generatorSection = document.getElementById('generator-section');
-        const scannerSection = document.getElementById('scanner-section');
-
-        const qrTitle = document.getElementById('qr-title');
-        const urlGeneratorSection = document.getElementById('url-generator-section');
-        const phoneGeneratorSection = document.getElementById('phone-generator-section');
-        const genModeUrlButton = document.getElementById('gen-mode-url');
-        const genModePhoneButton = document.getElementById('gen-mode-phone');
-        
-        const messageGenerateUrl = document.getElementById('message-generate-url');
-        const messageGeneratePhone = document.getElementById('message-generate-phone');
-        const urlInput = document.getElementById('url-input');
-        const phoneInput = document.getElementById('phone-input');
-        const countryCodeSelect = document.getElementById('country-code');
-        const generateButton = document.getElementById('generate-button');
-        const qrcodeContainer = document.getElementById('qrcode');
-        const actionButtons = document.getElementById('action-buttons');
-        const downloadButton = document.getElementById('download-button');
-        const shareButton = document.getElementById('share-button');
-        const logoutButton = document.getElementById('logout-button');
-        const userInfoDisplay = document.getElementById('user-info');
-
-        const scannerTitle = document.getElementById('scanner-title');
-        const messageScan = document.getElementById('message-scan');
-        const videoFeed = document.getElementById('video-feed');
-        const qrCanvas = document.getElementById('qr-canvas');
-        const scanButton = document.getElementById('scan-button');
-        const uploadInput = document.getElementById('upload-input');
-        const scanResult = document.getElementById('scan-result');
-        const openLinkButton = document.getElementById('open-link-button');
-        const canvasCtx = qrCanvas.getContext('2d');
-        
-        // Function to update all page text based on the current language
         function updateLanguage() {
             const t = translations[currentLang];
-            authTitle.textContent = t.authTitle;
-            authMessage.textContent = t.authMessage;
-            userNameInput.placeholder = t.loginNamePlaceholder;
-            loginButton.textContent = t.loginButton;
-            modeGeneratorButton.textContent = t.modeGenerator;
-            modeScannerButton.textContent = t.modeScanner;
-            qrTitle.textContent = t.qrTitle;
-            genModeUrlButton.textContent = t.genModeUrl;
-            genModePhoneButton.textContent = t.genModePhone;
-            messageGenerateUrl.textContent = t.qrMessageUrl;
-            messageGeneratePhone.textContent = t.qrMessagePhone;
-            urlInput.placeholder = t.urlInputPlaceholder;
-            phoneInput.placeholder = t.phoneInputPlaceholder;
-            generateButton.textContent = t.generateButton;
-            downloadButton.textContent = t.downloadButton;
-            shareButton.textContent = t.shareButton;
-            logoutButton.textContent = t.logoutButton;
-            scannerTitle.textContent = t.scannerTitle;
-            messageScan.textContent = t.scannerMessage;
-            scanButton.textContent = t.scanButton;
-            openLinkButton.textContent = t.openLinkButton;
-            langToggle.textContent = currentLang === 'si' ? 'English' : 'සිංහල';
+            elements.authTitle.textContent = t.appTitle;
+            elements.authMessage.textContent = t.authMessage;
+            elements.loginButton.textContent = t.loginButton;
+            elements.tabQr.textContent = t.tabQr;
+            elements.tabCalendar.textContent = t.tabCalendar;
+            elements.tabClock.textContent = t.tabClock;
+            elements.modeGeneratorButton.textContent = t.modeGenerator;
+            elements.modeScannerButton.textContent = t.modeScanner;
+            elements.qrTitle.textContent = t.qrTitle;
+            elements.genModeUrlButton.textContent = t.genModeUrl;
+            elements.genModePhoneButton.textContent = t.genModePhone;
+            elements.urlInput.placeholder = t.urlInputPlaceholder;
+            elements.phoneInput.placeholder = t.phoneInputPlaceholder;
+            elements.generateButton.textContent = t.generateButton;
+            elements.downloadButton.textContent = t.downloadButton;
+            elements.shareButton.textContent = t.shareButton;
+            elements.scannerTitle.textContent = t.scannerTitle;
+            elements.scanButton.textContent = t.scanButton;
+            elements.uploadInput.labels[0].textContent = t.uploadButton;
+            elements.openLinkButton.textContent = t.openLinkButton;
+            elements.calendarTitle.textContent = t.calendarTitle;
+            for (let i = 0; i < 7; i++) {
+                document.getElementById(`day-${t.days[i].toLowerCase().substring(0, 3)}`).textContent = t.days[i];
+            }
+            elements.holidayInfo.textContent = t.holidayInfo;
+            elements.clockTitle.textContent = t.clockTitle;
+            elements.subTabCurrent.textContent = t.subTabCurrent;
+            elements.subTabWorld.textContent = t.subTabWorld;
+            elements.subTabAlarm.textContent = t.subTabAlarm;
+            elements.subTabStopwatch.textContent = t.subTabStopwatch;
+            elements.alarmTitle.textContent = t.alarmTitle;
+            elements.setAlarmButton.textContent = t.setAlarmButton;
+            elements.stopwatchTitle.textContent = t.stopwatchTitle;
+            elements.startStopwatchButton.textContent = t.startStopwatchButton;
+            elements.stopStopwatchButton.textContent = t.stopStopwatchButton;
+            elements.resetStopwatchButton.textContent = t.resetStopwatchButton;
+            elements.logoutButton.textContent = t.logoutButton;
+            elements.langToggle.textContent = currentLang === 'si' ? 'English' : currentLang === 'en' ? 'தமிழ்' : 'සිංහල';
         }
-        
-        // Function to populate country codes
         function populateCountryCodes() {
+            elements.countryCodeSelect.innerHTML = '';
             countryCodes.forEach(country => {
                 const option = document.createElement('option');
                 option.value = country.code;
                 option.textContent = `${country.name} (${country.code})`;
-                countryCodeSelect.appendChild(option);
+                elements.countryCodeSelect.appendChild(option);
             });
-            countryCodeSelect.value = '+94'; // Set Sri Lanka as default
+            elements.countryCodeSelect.value = '+94';
         }
-
-        // Function to toggle between the login and QR code sections
         function toggleUI(loggedIn = false, name = null) {
+            elements.authContainer.classList.toggle('hidden', loggedIn);
+            elements.mainAppContainer.classList.toggle('hidden', !loggedIn);
             if (loggedIn) {
-                authContainer.classList.add('hidden');
-                qrCodeContainer.classList.remove('hidden');
-                qrCodeContainer.classList.add('fade-in');
-                userInfoDisplay.textContent = translations[currentLang].successLogin(name);
+                elements.userInfoDisplay.textContent = translations[currentLang].successLogin(name);
+                // Show QR section by default on login
+                showTab('qr');
             } else {
-                authContainer.classList.remove('hidden');
-                qrCodeContainer.classList.add('hidden');
-                userNameInput.value = '';
+                elements.userNameInput.value = '';
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+                if (stopwatchInterval) {
+                    clearInterval(stopwatchInterval);
+                }
             }
             updateLanguage();
         }
-
-        // Language toggle button event listener
-        langToggle.addEventListener('click', () => {
-            currentLang = currentLang === 'si' ? 'en' : 'si';
-            updateLanguage();
-        });
-        
-        // Login process (using only name)
-        loginButton.addEventListener('click', () => {
-            const name = userNameInput.value.trim();
-            if (!name) {
-                authMessage.textContent = translations[currentLang].errorFillFields;
-                return;
+        function showTab(tabId) {
+            const tabs = ['qr', 'calendar', 'clock'];
+            tabs.forEach(id => {
+                document.getElementById(`${id}-section`).classList.toggle('hidden', id !== tabId);
+                document.getElementById(`tab-${id}`).classList.toggle('active', id === tabId);
+                document.getElementById(`tab-${id}`).classList.toggle('bg-indigo-600', id === tabId);
+                document.getElementById(`tab-${id}`).classList.toggle('text-white', id === tabId);
+                document.getElementById(`tab-${id}`).classList.toggle('bg-gray-200', id !== tabId);
+                document.getElementById(`tab-${id}`).classList.toggle('text-gray-700', id !== tabId);
+            });
+            if (tabId === 'calendar') {
+                renderCalendar();
             }
-            currentUser = { name: name };
-            toggleUI(true, currentUser.name);
+            if (tabId === 'clock') {
+                updateClock();
+                showClockSubTab('current');
+            }
+        }
+        function showClockSubTab(tabId) {
+            const subTabs = ['current', 'world', 'alarm', 'stopwatch'];
+            subTabs.forEach(id => {
+                document.getElementById(`${id}-time-section`).classList.toggle('hidden', id !== tabId);
+                document.getElementById(`${id}-clock-section`).classList.toggle('hidden', id !== tabId);
+                document.getElementById(`${id}-section`).classList.toggle('hidden', id !== tabId);
+                document.getElementById(`sub-tab-${id}`).classList.toggle('active', id === tabId);
+                document.getElementById(`sub-tab-${id}`).classList.toggle('bg-blue-600', id === tabId);
+                document.getElementById(`sub-tab-${id}`).classList.toggle('text-white', id === tabId);
+                document.getElementById(`sub-tab-${id}`).classList.toggle('bg-gray-200', id !== tabId);
+                document.getElementById(`sub-tab-${id}`).classList.toggle('text-gray-700', id !== tabId);
+            });
+        }
+        elements.loginButton.addEventListener('click', () => {
+            const name = elements.userNameInput.value.trim();
+            if (name) {
+                currentUser = { name: name };
+                toggleUI(true, currentUser.name);
+            } else {
+                alert(translations[currentLang].errorFillFields);
+            }
         });
-
-        // Go back/logout function
-        logoutButton.addEventListener('click', () => {
+        elements.logoutButton.addEventListener('click', () => {
             currentUser = null;
             toggleUI(false);
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
         });
-
-        // ### Mode selection (Generator vs. Scanner) ###
-        modeGeneratorButton.addEventListener('click', () => {
-            generatorSection.classList.remove('hidden');
-            scannerSection.classList.add('hidden');
-            modeGeneratorButton.classList.add('bg-indigo-600', 'text-white');
-            modeGeneratorButton.classList.remove('bg-gray-200', 'text-gray-700');
-            modeScannerButton.classList.add('bg-gray-200', 'text-gray-700');
-            modeScannerButton.classList.remove('bg-indigo-600', 'text-white');
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
+        elements.langToggle.addEventListener('click', () => {
+            currentLang = currentLang === 'si' ? 'en' : currentLang === 'en' ? 'ta' : 'si';
+            updateLanguage();
         });
-
-        modeScannerButton.addEventListener('click', () => {
-            scannerSection.classList.remove('hidden');
-            generatorSection.classList.add('hidden');
-            modeScannerButton.classList.add('bg-indigo-600', 'text-white');
-            modeScannerButton.classList.remove('bg-gray-200', 'text-gray-700');
-            modeGeneratorButton.classList.add('bg-gray-200', 'text-gray-700');
-            modeGeneratorButton.classList.remove('bg-indigo-600', 'text-white');
-            // Stop any previous stream
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-            }
-            scanResult.textContent = '';
-            openLinkButton.classList.add('hidden');
+        // Main tab events
+        elements.tabQr.addEventListener('click', () => showTab('qr'));
+        elements.tabCalendar.addEventListener('click', () => showTab('calendar'));
+        elements.tabClock.addEventListener('click', () => showTab('clock'));
+        // QR Section events
+        elements.modeGeneratorButton.addEventListener('click', () => {
+            elements.generatorSection.classList.remove('hidden');
+            elements.scannerSection.classList.add('hidden');
+            elements.modeGeneratorButton.classList.add('bg-indigo-600', 'text-white');
+            elements.modeGeneratorButton.classList.remove('bg-gray-200', 'text-gray-700');
+            elements.modeScannerButton.classList.add('bg-gray-200', 'text-gray-700');
+            elements.modeScannerButton.classList.remove('bg-indigo-600', 'text-white');
+            if (videoStream) videoStream.getTracks().forEach(track => track.stop());
         });
-
-        // ### Generator mode selection ###
-        genModeUrlButton.addEventListener('click', () => {
+        elements.modeScannerButton.addEventListener('click', () => {
+            elements.scannerSection.classList.remove('hidden');
+            elements.generatorSection.classList.add('hidden');
+            elements.modeScannerButton.classList.add('bg-indigo-600', 'text-white');
+            elements.modeScannerButton.classList.remove('bg-gray-200', 'text-gray-700');
+            elements.modeGeneratorButton.classList.add('bg-gray-200', 'text-gray-700');
+            elements.modeGeneratorButton.classList.remove('bg-indigo-600', 'text-white');
+            if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+            elements.scanResult.textContent = '';
+            elements.openLinkButton.classList.add('hidden');
+        });
+        elements.genModeUrlButton.addEventListener('click', () => {
             currentGeneratorMode = 'url';
-            urlGeneratorSection.classList.remove('hidden');
-            phoneGeneratorSection.classList.add('hidden');
-            genModeUrlButton.classList.add('bg-indigo-600', 'text-white');
-            genModeUrlButton.classList.remove('bg-gray-200', 'text-gray-700');
-            genModePhoneButton.classList.add('bg-gray-200', 'text-gray-700');
-            genModePhoneButton.classList.remove('bg-indigo-600', 'text-white');
-            qrcodeContainer.innerHTML = '';
-            actionButtons.classList.add('hidden');
+            elements.urlGeneratorSection.classList.remove('hidden');
+            elements.phoneGeneratorSection.classList.add('hidden');
+            elements.genModeUrlButton.classList.add('bg-blue-600', 'text-white');
+            elements.genModeUrlButton.classList.remove('bg-gray-200', 'text-gray-700');
+            elements.genModePhoneButton.classList.add('bg-gray-200', 'text-gray-700');
+            elements.genModePhoneButton.classList.remove('bg-blue-600', 'text-white');
+            elements.qrcodeContainer.innerHTML = '';
+            elements.actionButtons.classList.add('hidden');
         });
-
-        genModePhoneButton.addEventListener('click', () => {
+        elements.genModePhoneButton.addEventListener('click', () => {
             currentGeneratorMode = 'phone';
-            urlGeneratorSection.classList.add('hidden');
-            phoneGeneratorSection.classList.remove('hidden');
-            genModePhoneButton.classList.add('bg-indigo-600', 'text-white');
-            genModePhoneButton.classList.remove('bg-gray-200', 'text-gray-700');
-            genModeUrlButton.classList.add('bg-gray-200', 'text-gray-700');
-            genModeUrlButton.classList.remove('bg-indigo-600', 'text-white');
-            qrcodeContainer.innerHTML = '';
-            actionButtons.classList.add('hidden');
+            elements.urlGeneratorSection.classList.add('hidden');
+            elements.phoneGeneratorSection.classList.remove('hidden');
+            elements.genModePhoneButton.classList.add('bg-blue-600', 'text-white');
+            elements.genModePhoneButton.classList.remove('bg-gray-200', 'text-gray-700');
+            elements.genModeUrlButton.classList.add('bg-gray-200', 'text-gray-700');
+            elements.genModeUrlButton.classList.remove('bg-blue-600', 'text-white');
+            elements.qrcodeContainer.innerHTML = '';
+            elements.actionButtons.classList.add('hidden');
         });
-
-        // ### QR Code Generator Process ###
-        generateButton.addEventListener('click', () => {
+        elements.generateButton.addEventListener('click', () => {
             let qrText = '';
             if (currentGeneratorMode === 'url') {
-                let url = urlInput.value.trim();
+                let url = elements.urlInput.value.trim();
                 if (url) {
                     const urlPattern = /^(http|https):\/\/[^ "]+$/;
                     if (!urlPattern.test(url)) {
@@ -410,40 +623,24 @@
                     return;
                 }
             } else if (currentGeneratorMode === 'phone') {
-                const countryCode = countryCodeSelect.value;
-                const phoneNumber = phoneInput.value.trim();
+                const countryCode = elements.countryCodeSelect.value;
+                const phoneNumber = elements.phoneInput.value.trim();
                 if (phoneNumber) {
-                    // Validate phone number
-                    const phonePattern = /^[0-9]{10}$/;
-                    if (!phonePattern.test(phoneNumber)) {
-                        alert(translations[currentLang].errorPhoneInput);
-                        return;
-                    }
                     qrText = `tel:${countryCode}${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
                 } else {
                     alert(translations[currentLang].errorFillFields);
                     return;
                 }
             }
-
             if (qrText) {
-                qrcodeContainer.innerHTML = '';
-                new QRCode(qrcodeContainer, {
-                    text: qrText,
-                    width: 256,
-                    height: 256,
-                    colorDark: "#1f2937",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                actionButtons.classList.remove('hidden');
+                elements.qrcodeContainer.innerHTML = '';
+                new QRCode(elements.qrcodeContainer, { text: qrText, width: 256, height: 256 });
+                elements.actionButtons.classList.remove('hidden');
                 lastScannedData = qrText;
             }
         });
-
-        // Download QR code as PNG
-        downloadButton.addEventListener('click', () => {
-            const canvas = qrcodeContainer.querySelector('canvas');
+        elements.downloadButton.addEventListener('click', () => {
+            const canvas = elements.qrcodeContainer.querySelector('canvas');
             if (canvas) {
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
@@ -454,117 +651,193 @@
                 document.body.removeChild(a);
             }
         });
-
-        // Share QR code image
-        shareButton.addEventListener('click', async () => {
-            const canvas = qrcodeContainer.querySelector('canvas');
+        elements.shareButton.addEventListener('click', async () => {
+            const canvas = elements.qrcodeContainer.querySelector('canvas');
             if (!canvas) return;
-
             try {
                 const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                 const file = new File([blob], 'qrcode.png', { type: 'image/png' });
-
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'QR Code',
-                        text: 'Check out this QR code I generated!'
-                    });
+                    await navigator.share({ files: [file], title: 'QR Code' });
                 } else {
                     alert(translations[currentLang].shareFallback);
                 }
-            } catch (error) {
-                console.error('Sharing failed:', error);
-                alert(`Sharing failed: ${error.message}`);
-            }
+            } catch (error) { console.error('Sharing failed:', error); }
         });
-
-        // ### QR Code Scanner Process ###
-
-        // Start camera stream
-        scanButton.addEventListener('click', async () => {
+        elements.scanButton.addEventListener('click', async () => {
             try {
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                videoFeed.srcObject = videoStream;
-                videoFeed.play();
+                elements.videoFeed.srcObject = videoStream;
+                elements.videoFeed.play();
                 requestAnimationFrame(tick);
-                scanResult.textContent = '';
-                openLinkButton.classList.add('hidden');
+                elements.scanResult.textContent = '';
+                elements.openLinkButton.classList.add('hidden');
             } catch (error) {
                 console.error(translations[currentLang].cameraError, error);
-                scanResult.textContent = translations[currentLang].cameraError + error.message;
+                elements.scanResult.textContent = translations[currentLang].cameraError + error.message;
             }
         });
-
-        // Continuous scanning loop
         function tick() {
-            if (videoFeed.readyState === videoFeed.HAVE_ENOUGH_DATA) {
-                qrCanvas.height = videoFeed.videoHeight;
-                qrCanvas.width = videoFeed.videoWidth;
-                canvasCtx.drawImage(videoFeed, 0, 0, qrCanvas.width, qrCanvas.height);
-                const imageData = canvasCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-
+            if (elements.videoFeed.readyState === elements.videoFeed.HAVE_ENOUGH_DATA) {
+                elements.qrCanvas.height = elements.videoFeed.videoHeight;
+                elements.qrCanvas.width = elements.videoFeed.videoWidth;
+                canvasCtx.drawImage(elements.videoFeed, 0, 0, elements.qrCanvas.width, elements.qrCanvas.height);
+                const imageData = canvasCtx.getImageData(0, 0, elements.qrCanvas.width, elements.qrCanvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
                 if (code) {
                     if (code.data !== lastScannedData) {
                         lastScannedData = code.data;
-                        scanResult.textContent = translations[currentLang].scanResult(code.data);
-                        openLinkButton.classList.remove('hidden');
-                        if (videoStream) {
-                            videoStream.getTracks().forEach(track => track.stop());
-                        }
-                        openLinkButton.textContent = code.data.startsWith('tel:') ? translations[currentLang].openDialerButton : translations[currentLang].openLinkButton;
-                        openLinkButton.onclick = () => {
-                            if (code.data.startsWith('http')) {
-                                window.open(code.data, '_blank');
-                            } else if (code.data.startsWith('tel:')) {
-                                window.location.href = code.data;
-                            } else {
-                                alert('Unsupported data format for opening.');
-                            }
-                        };
+                        elements.scanResult.textContent = translations[currentLang].scanResult(code.data);
+                        elements.openLinkButton.classList.remove('hidden');
+                        if (videoStream) videoStream.getTracks().forEach(track => track.stop());
+                        elements.openLinkButton.textContent = code.data.startsWith('tel:') ? translations[currentLang].openDialerButton : translations[currentLang].openLinkButton;
+                        elements.openLinkButton.onclick = () => { window.open(code.data.startsWith('tel:') ? code.data : `http://${code.data}`, '_blank'); };
                     }
                 }
                 requestAnimationFrame(tick);
             }
         }
-
-        // Scan from an uploaded image
-        uploadInput.addEventListener('change', (e) => {
+        elements.uploadInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (event) => {
                 const image = new Image();
                 image.onload = () => {
-                    qrCanvas.width = image.width;
-                    qrCanvas.height = image.height;
+                    elements.qrCanvas.width = image.width;
+                    elements.qrCanvas.height = image.height;
                     canvasCtx.drawImage(image, 0, 0, image.width, image.height);
-                    const imageData = canvasCtx.getImageData(0, 0, qrCanvas.width, qrCanvas.height);
+                    const imageData = canvasCtx.getImageData(0, 0, elements.qrCanvas.width, elements.qrCanvas.height);
                     const code = jsQR(imageData.data, imageData.width, imageData.height);
                     if (code) {
-                        scanResult.textContent = translations[currentLang].scanResult(code.data);
-                        openLinkButton.classList.remove('hidden');
-                        openLinkButton.textContent = code.data.startsWith('tel:') ? translations[currentLang].openDialerButton : translations[currentLang].openLinkButton;
-                        openLinkButton.onclick = () => {
-                            window.open(code.data.startsWith('http') ? code.data : code.data, '_blank');
-                        };
+                        elements.scanResult.textContent = translations[currentLang].scanResult(code.data);
+                        elements.openLinkButton.classList.remove('hidden');
+                        elements.openLinkButton.textContent = code.data.startsWith('tel:') ? translations[currentLang].openDialerButton : translations[currentLang].openLinkButton;
+                        elements.openLinkButton.onclick = () => { window.open(code.data.startsWith('http') ? code.data : `http://${code.data}`, '_blank'); };
                     } else {
-                        scanResult.textContent = translations[currentLang].scanError;
-                        openLinkButton.classList.add('hidden');
+                        elements.scanResult.textContent = translations[currentLang].scanError;
+                        elements.openLinkButton.classList.add('hidden');
                     }
                 };
                 image.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });
-        
-        // Initial function calls on page load
+        // Calendar functions
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            elements.currentMonthYear.textContent = `${translations[currentLang].months[month]} ${year}`;
+            elements.calendarDays.innerHTML = '';
+            for (let i = 0; i < firstDay; i++) {
+                elements.calendarDays.innerHTML += '<div></div>';
+            }
+            const monthHolidays = holidays.filter(h => new Date(h.date).getFullYear() === year && new Date(h.date).getMonth() === month);
+            elements.holidayList.innerHTML = '';
+            monthHolidays.forEach(h => {
+                const li = document.createElement('li');
+                li.textContent = `${new Date(h.date).getDate()} - ${h.name}`;
+                elements.holidayList.appendChild(li);
+            });
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.textContent = day;
+                dayDiv.className = 'py-2 rounded-lg';
+                const holiday = monthHolidays.find(h => new Date(h.date).getDate() === day);
+                if (holiday) {
+                    dayDiv.classList.add('holiday');
+                }
+                elements.calendarDays.appendChild(dayDiv);
+            }
+        }
+        elements.prevMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            if (currentDate.getFullYear() < 2000) {
+                currentDate.setFullYear(2000);
+                currentDate.setMonth(0);
+            }
+            renderCalendar();
+        });
+        elements.nextMonthButton.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        // Clock functions
+        function updateClock() {
+            const now = new Date();
+            elements.currentTimeDisplay.textContent = now.toLocaleTimeString('en-US', { hour12: true });
+            elements.currentDateDisplay.textContent = now.toLocaleDateString(currentLang, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            // Update world clocks
+            elements.worldClockList.innerHTML = '';
+            worldClockTimezones.forEach(tz => {
+                const cityTime = new Date().toLocaleTimeString('en-US', { timeZone: tz.timezone });
+                const div = document.createElement('div');
+                div.className = 'py-2 border-b border-gray-200 last:border-b-0';
+                div.textContent = `${tz.name}: ${cityTime}`;
+                elements.worldClockList.appendChild(div);
+            });
+            setTimeout(updateClock, 1000);
+        }
+        elements.subTabCurrent.addEventListener('click', () => showClockSubTab('current'));
+        elements.subTabWorld.addEventListener('click', () => showClockSubTab('world'));
+        elements.subTabAlarm.addEventListener('click', () => showClockSubTab('alarm'));
+        elements.subTabStopwatch.addEventListener('click', () => showClockSubTab('stopwatch'));
+        // Alarm functions
+        elements.setAlarmButton.addEventListener('click', () => {
+            const alarmTime = elements.alarmTimeInput.value;
+            if (!alarmTime) {
+                alert(translations[currentLang].errorFillFields);
+                return;
+            }
+            elements.alarmStatus.textContent = translations[currentLang].alarmSetMessage(alarmTime);
+            elements.alarmStatus.classList.remove('hidden');
+            const [hours, minutes] = alarmTime.split(':').map(Number);
+            if (alarmInterval) clearInterval(alarmInterval);
+            alarmInterval = setInterval(() => {
+                const now = new Date();
+                if (now.getHours() === hours && now.getMinutes() === minutes) {
+                    alert(`${translations[currentLang].alarmTitleDialog}\n${translations[currentLang].alarmMessageDialog}`);
+                    clearInterval(alarmInterval);
+                    elements.alarmStatus.classList.add('hidden');
+                }
+            }, 1000);
+        });
+        // Stopwatch functions
+        elements.startStopwatchButton.addEventListener('click', () => {
+            if (!stopwatchInterval) {
+                let startTime = Date.now() - stopwatchTime;
+                stopwatchInterval = setInterval(() => {
+                    stopwatchTime = Date.now() - startTime;
+                    const hours = Math.floor(stopwatchTime / 3600000);
+                    const minutes = Math.floor((stopwatchTime % 3600000) / 60000);
+                    const seconds = Math.floor((stopwatchTime % 60000) / 1000);
+                    elements.stopwatchDisplay.textContent = 
+                        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }, 1000);
+                elements.startStopwatchButton.classList.add('hidden');
+                elements.stopStopwatchButton.classList.remove('hidden');
+            }
+        });
+        elements.stopStopwatchButton.addEventListener('click', () => {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            elements.startStopwatchButton.classList.remove('hidden');
+            elements.stopStopwatchButton.classList.add('hidden');
+        });
+        elements.resetStopwatchButton.addEventListener('click', () => {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            stopwatchTime = 0;
+            elements.stopwatchDisplay.textContent = '00:00:00';
+            elements.startStopwatchButton.classList.remove('hidden');
+            elements.stopStopwatchButton.classList.add('hidden');
+        });
+        // Initial setup
         populateCountryCodes();
         updateLanguage();
+        // The app starts in the auth screen, so no need to call toggleUI(true) initially.
     </script>
 </body>
 </html>
