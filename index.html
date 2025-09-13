@@ -25,12 +25,22 @@
         .stopwatch-button { transition: background-color 0.3s, transform 0.2s; }
         .stopwatch-button:hover { transform: scale(1.1); }
         .stopwatch-display { font-variant-numeric: tabular-nums; }
+        .lang-button.active {
+            background-color: #4f46e5;
+            color: white;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
-    <div class="absolute top-4 right-4 z-50">
-        <button id="lang-toggle" class="bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
+    <div class="absolute top-4 right-4 z-50 flex space-x-2">
+        <button id="lang-si" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200 active">
+            සිංහල
+        </button>
+        <button id="lang-en" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
             English
+        </button>
+        <button id="lang-ta" class="lang-button bg-gray-700 text-white py-2 px-4 rounded-lg shadow-md hover:bg-gray-600 transition-colors duration-200">
+            தமிழ்
         </button>
     </div>
 
@@ -349,7 +359,7 @@
 
         const holidays = {
             'LK': [
-                { date: '2025-01-13', name: 'Duruthu Full Moon Poya Day' },
+            { date: '2025-01-13', name: 'Duruthu Full Moon Poya Day' },
                 { date: '2025-01-14', name: 'Tamil Thai Pongal Day' },
                 { date: '2025-02-04', name: 'National Day' },
                 { date: '2025-02-12', name: 'Navam Full Moon Poya Day' },
@@ -374,8 +384,6 @@
                 { date: '2025-11-05', name: 'Il Full Moon Poya Day' },
                 { date: '2025-12-04', name: 'Unduvap Full Moon Poya Day' },
                 { date: '2025-12-25', name: 'Christmas Day' },
-         
-                
             ],
             'IN': [
                 { date: '2025-01-26', name: 'Republic Day' },
@@ -425,7 +433,9 @@
             authMessage: document.getElementById('auth-message'),
             userNameInput: document.getElementById('user-name'),
             loginButton: document.getElementById('login-button'),
-            langToggle: document.getElementById('lang-toggle'),
+            langSi: document.getElementById('lang-si'),
+            langEn: document.getElementById('lang-en'),
+            langTa: document.getElementById('lang-ta'),
             userInfoDisplay: document.getElementById('user-info'),
             tabQr: document.getElementById('tab-qr'),
             tabCalendar: document.getElementById('tab-calendar'),
@@ -527,7 +537,8 @@
             elements.stopStopwatchButton.textContent = t.stopStopwatchButton;
             elements.resetStopwatchButton.textContent = t.resetStopwatchButton;
             elements.logoutButton.textContent = t.logoutButton;
-            elements.langToggle.textContent = currentLang === 'si' ? 'English' : currentLang === 'en' ? 'தமிழ்' : 'සිංහල';
+            document.querySelectorAll('.lang-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${currentLang}`).classList.add('active');
         }
 
         function populateCountryCodes() {
@@ -592,12 +603,17 @@
             toggleUI(false);
         });
 
-        elements.langToggle.addEventListener('click', () => {
-            currentLang = currentLang === 'si' ? 'en' : currentLang === 'en' ? 'ta' : 'si';
+        document.getElementById('lang-si').addEventListener('click', () => {
+            currentLang = 'si';
             updateLanguage();
-            if (!elements.mainAppContainer.classList.contains('hidden')) {
-                showTab(document.querySelector('.sidebar-item.active').id.replace('tab-', ''));
-            }
+        });
+        document.getElementById('lang-en').addEventListener('click', () => {
+            currentLang = 'en';
+            updateLanguage();
+        });
+        document.getElementById('lang-ta').addEventListener('click', () => {
+            currentLang = 'ta';
+            updateLanguage();
         });
 
         // Main tab events
